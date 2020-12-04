@@ -82,3 +82,65 @@ def files_load(filename, x, y, scale_x=-1, scale_y=-1, colorkey=None):
 
         return files, file_rect
 
+class Dinosaur():
+
+    def __init__(self, sizex=-1,sizey=-1):
+        self.images, self.rect = files_load('dino.png', 5, 1, sizex, sizey, -1)     #getting image list and a rectange from files
+        self.image = self.images[0]     #getting a single image from the list
+
+
+    def draw(self):     #drawing a dinosaur
+        screen.blit(self.image, self.rect)
+    
+
+class Ground():
+
+    def __init__(self, speed= 1):       
+        self.image,self.rect = env_img_load('ground.png',-1,-1,-1)      #getting ground image
+        self.image2,self.rect2 = env_img_load('ground.png',-1,-1,-1)    #getting the same image, because one is not enough to have the moving ground
+        self.rect.bottom = height       #placing the ground to the bottom of the screen
+        self.rect2.bottom = height
+        self.rect2.left = self.rect.right   # second ground picture initially will be to the right of the first one
+        self.speed = speed      # setting the speed of ground motion 
+
+    def draw(self):     #drawing a ground
+        screen.blit(self.image,self.rect)           
+        screen.blit(self.image2,self.rect2)
+
+    def update(self):
+        self.rect.left -= self.speed        #ground pictures will be moving to the left
+        self.rect2.left -= self.speed
+
+        if self.rect.right <0:                  # if the fist picture is gone out of the screen, it moved to the right of the second one
+            self.rect.left = self.rect2.right
+
+        if self.rect2.right <0:                 # the opposite to the previous one
+            self.rect2.left = self.rect.right
+
+
+
+def game():
+    counter = 0
+    gamespeed = 1
+    gameOver = False
+    Dino = Dinosaur(40,40)
+    game_ground = Ground()
+
+    while True:
+        for event in pygame.event.get():   
+            if event.type == pygame.QUIT:
+                quit()
+            
+        screen.fill(background_color)
+        Dino.draw()
+        game_ground.draw()
+        game_ground.update()
+
+
+
+        pygame.display.update()
+        clock.tick(FPS)
+
+game()
+
+
