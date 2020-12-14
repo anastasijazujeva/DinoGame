@@ -86,12 +86,42 @@ class Dinosaur():
 
     def __init__(self, sizex=-1,sizey=-1):
         self.images, self.rect = files_load('dino.png', 5, 1, sizex, sizey, -1)     #getting image list and a rectange from files
+        self.images_duck,self.rectduck = files_load('dino_ducking.png',2,1,59,sizey,-1) #getting image list for ducking and a rectange from files
         self.image = self.images[0]     #getting a single image from the list
+        self.rect.bottom = height-2.2 #setting dinosuar on ground
+        self.rect.left = 40 #setting dinosaur position from left
+        self.standing_width = self.rect.width #width of standing sprite
+        self.ducking_width = self.rectduck.width #width of ducking sprite 
+        self.isJumping = False #jumping flag
+        self.isDead= False #Flag for game failure
+        self.isDucking= False #Flag for duck movement 
+        self.num = 0 #used to cycle through animations 
+        self.counter=0 #used to cycle through animations 
 
 
+    def update(self):
+
+        # this section deals with sprite animation, cycles through walking animation, resets at %5 (walking animation has only 5 sprites 0-4, ducking animation has only 2 0-1)     
+        if self.isDucking:  
+            if self.counter % 5 == 0:
+                self.num = (self.num + 1)%2
+        else:
+            if self.counter % 5 == 0:
+                self.num = (self.num + 1)%2 + 2
+
+        if not self.isDucking:
+            self.image = self.images[self.num]
+            self.rect.width = self.standing_width
+        else:
+            self.image = self.images_duck[(self.num)%2]
+            self.rect.width = self.ducking_width
+        self.counter = (self.counter + 1)
+        
     def draw(self):     #drawing a dinosaur
         screen.blit(self.image, self.rect)
     
+
+
 
 class Ground():
 
@@ -129,10 +159,33 @@ def game():
     while True:
         for event in pygame.event.get():   
             if event.type == pygame.QUIT:
+                pygame.quit()
                 quit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    if Dino.rect.bottom == height-2.2:
+                        Dino.isJumping = True
+
+                if event.key == pygame.K_DOWN:
+                    if not (Dino.isJumping and Dino.isDead):
+                        Dino.isDucking = True
+
+            if event.type == pygame.KEYUP:
+                if event.key == pygame.K_DOWN:
+                    Dino.isDucking = False
+  
+
+
+
+                   
+
+
+
+                    
             
         screen.fill(background_color)
         Dino.draw()
+        Dino.update()
         game_ground.draw()
         game_ground.update()
 
