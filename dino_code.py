@@ -88,18 +88,31 @@ class Dinosaur():
         self.images, self.rect = files_load('dino.png', 5, 1, sizex, sizey, -1)     #getting image list and a rectange from files
         self.images_duck,self.rectduck = files_load('dino_ducking.png',2,1,59,sizey,-1) #getting image list for ducking and a rectange from files
         self.image = self.images[0]     #getting a single image from the list
-        self.rect.bottom = height-2.2 #setting dinosuar on ground
+        self.rect.bottom = height-3 #setting dinosuar on ground
         self.rect.left = 40 #setting dinosaur position from left
         self.standing_width = self.rect.width #width of standing sprite
         self.ducking_width = self.rectduck.width #width of ducking sprite 
         self.isJumping = False #jumping flag
+        self.jumpSpeed = 11 #dinosaur jumping speed 
         self.isDead= False #Flag for game failure
         self.isDucking= False #Flag for duck movement 
         self.num = 0 #used to cycle through animations 
-        self.counter=0 #used to cycle through animations 
+        self.counter=0 #used to cycle through animations
+        self.movementVector = [0,0] #Array used by function move() from pygame. Rectangle is moved by the [x,y]
 
+
+    def checkIfLanded(self):    #checks have the dinosaur landed or not
+        if self.rect.bottom>height-3:
+            self.rect.bottom = height-3
+            self.isJumping = False
+
+            
 
     def update(self):
+
+        #if the dinosaur is jumping, then he eventually starting to fall
+        if self.isJumping:  
+            self.movementVector[1] = self.movementVector[1] + gravity
 
         # this section deals with sprite animation, cycles through walking animation, resets at %5 (walking animation has only 5 sprites 0-4, ducking animation has only 2 0-1)     
         if self.isDucking:  
@@ -117,6 +130,9 @@ class Dinosaur():
             self.rect.width = self.ducking_width
         self.counter = (self.counter + 1)
         
+        self.rect = self.rect.move(self.movementVector) #changing the position of the dinosaur
+        self.checkIfLanded()
+
     def draw(self):     #drawing a dinosaur
         screen.blit(self.image, self.rect)
     
@@ -163,8 +179,9 @@ def game():
                 quit()
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
-                    if Dino.rect.bottom == height-2.2:
+                    if Dino.rect.bottom == height-3:
                         Dino.isJumping = True
+                        Dino.movementVector[1] = -1*Dino.jumpSpeed
 
                 if event.key == pygame.K_DOWN:
                     if not (Dino.isJumping and Dino.isDead):
