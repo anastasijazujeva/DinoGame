@@ -137,6 +137,26 @@ class Dinosaur():
         screen.blit(self.image, self.rect)
     
 
+class Cactus(pygame.sprite.Sprite): #cactus class; pygame.sprite.Sprite is a simple base class for visible game objects from pygame library
+    def __init__(self, group, speed=0, sizex=-1,sizey=-1):
+        pygame.sprite.Sprite.__init__(self) #parent class constructor
+        self.images, self.rect = files_load('cacti-small.png',3,1,sizex,sizey,-1)
+        self.image = self.images[random.randrange(0,3)]
+        self.rect.left = width + self.rect.width
+        self.rect.bottom = height-3
+        self.movementVector = [-1*speed, 0]
+
+        self.add(group) #adding a cactus to a group
+
+    def draw(self):
+        screen.blit(self.image, self.rect)
+
+    def update(self):
+        self.rect = self.rect.move(self.movementVector)
+
+        if self.rect.right<0:   #Cactus is removed from the group cactuses when it goes out of the screen
+            self.kill()
+
 
 
 class Ground():
@@ -167,10 +187,13 @@ class Ground():
 
 def game():
     counter = 0
-    gamespeed = 1
+    gameSpeed = 2
     gameOver = False
     Dino = Dinosaur(40,40)
     game_ground = Ground()
+
+    cactuses = pygame.sprite.Group()    #creating cactuses group
+    last_obstacle = pygame.sprite.Group()   #last_obstacle is meant to keep track of the last created obstacle to decide when to create a new one
 
     while True:
         for event in pygame.event.get():   
@@ -190,13 +213,21 @@ def game():
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_DOWN:
                     Dino.isDucking = False
-  
 
+        for i in cactuses:      #forcing cactuses to move
+            i.movementVector[0] = -1*gameSpeed
 
+        if len(cactuses)<2: 
+            if len(cactuses)==0:    #creating the first obstacle which always gonna be a cactus
+                last_obstacle.empty()
+                last_obstacle.add(Cactus(cactuses, gameSpeed, 40, 40))
+            else:
+                for i in last_obstacle:
+                    if i.rect.right < width*0.5:    #if last obstacle went through the half of the screen we can create another cactus
+                        last_obstacle.empty()
+                        last_obstacle.add(Cactus(cactuses, gameSpeed, 40, 40))
 
-                   
-
-
+        
 
                     
             
@@ -205,7 +236,8 @@ def game():
         Dino.update()
         game_ground.draw()
         game_ground.update()
-
+        cactuses.draw(screen)
+        cactuses.update()
 
 
         pygame.display.update()
