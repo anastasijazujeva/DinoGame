@@ -10,7 +10,7 @@ pygame.init()
 # Screen settings
 screen_size = (width,height) = (610,160)
 FPS = 60 # frame rate
-gravity = 0.6
+gravity = 0.7
 
 black = (0,0,0)
 white = (255,255,255)
@@ -179,12 +179,12 @@ def game():
                 quit()
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
-                    if Dino.rect.bottom == height-3:
+                    if (Dino.rect.bottom == height-3 and Dino.isDucking == False) :
                         Dino.isJumping = True
                         Dino.movementVector[1] = -1*Dino.jumpSpeed
 
                 if event.key == pygame.K_DOWN:
-                    if not (Dino.isJumping and Dino.isDead):
+                    if not (Dino.isJumping or Dino.isDead):
                         Dino.isDucking = True
 
             if event.type == pygame.KEYUP:
