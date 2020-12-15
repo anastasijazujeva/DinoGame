@@ -10,7 +10,7 @@ pygame.init()
 # Screen settings
 screen_size = (width,height) = (610,160)
 FPS = 60 # frame rate
-gravity = 0.7
+gravity = 0.6
 
 black = (0,0,0)
 white = (255,255,255)
@@ -93,7 +93,7 @@ class Dinosaur():
         self.standing_width = self.rect.width #width of standing sprite
         self.ducking_width = self.rectduck.width #width of ducking sprite 
         self.isJumping = False #jumping flag
-        self.jumpSpeed = 11 #dinosaur jumping speed 
+        self.jumpSpeed = 11.5 #dinosaur jumping speed 
         self.isDead= False #Flag for game failure
         self.isDucking= False #Flag for duck movement 
         self.num = 0 #used to cycle through animations 
@@ -138,7 +138,7 @@ class Dinosaur():
     
 
 class Cactus(pygame.sprite.Sprite): #cactus class; pygame.sprite.Sprite is a simple base class for visible game objects from pygame library
-    def __init__(self, group, speed=0, sizex=-1,sizey=-1):
+    def __init__(self, group, speed=5, sizex=-1,sizey=-1):
         pygame.sprite.Sprite.__init__(self) #parent class constructor
         self.images, self.rect = files_load('cacti-small.png',3,1,sizex,sizey,-1)
         self.image = self.images[random.randrange(0,3)]
@@ -157,6 +157,31 @@ class Cactus(pygame.sprite.Sprite): #cactus class; pygame.sprite.Sprite is a sim
         if self.rect.right<0:   #Cactus is removed from the group cactuses when it goes out of the screen
             self.kill()
 
+
+class DinoObsticle(pygame.sprite.Sprite): #pterodactyl class, pygame.Sprite is bacuse its a visible game object
+    def __init__(self,group,speed=5,sizex=-1,sizey=-1):
+        pygame.sprite.Sprite.__init__(self)
+        self.images,self.rect = files_load('ptera.png',2,1,sizex,sizey,-1)
+        self.ptera_height = [height-35,height-50,height-65,height-25] #different heigh pterodactyl can spawn at
+        self.rect.centery = self.ptera_height[random.randrange(0,4)] #set randomness to height of pterodactyl
+        self.image = self.images[0]
+        self.rect.left = width + self.rect.width #set position from left side of screen
+        self.movementVector = [-1*speed,0]
+        self.num = 0 #used to cycle through wing animation
+        self.counter = 0 #used to cycle through wing animation
+        self.add(group) #adding pterodactyl to pterodactyl group
+
+    def draw(self):
+        screen.blit(self.image,self.rect)
+
+    def update(self):
+        if self.counter % 8 == 0: #frequencey of animation
+            self.num = (self.num+1)%2
+        self.image = self.images[self.num]
+        self.rect = self.rect.move(self.movementVector) 
+        self.counter = (self.counter + 1)
+        if self.rect.right < 0: #goes beyond screen kill it
+            self.kill()
 
 
 class Ground():
@@ -187,15 +212,18 @@ class Ground():
 
 def game():
     counter = 0
-    gameSpeed = 2
+    gameSpeed = 3
     gameOver = False
     Dino = Dinosaur(40,40)
     game_ground = Ground()
 
     cactuses = pygame.sprite.Group()    #creating cactuses group
+    pterodactyl = pygame.sprite.Group() #creating pterodactyl group
     last_obstacle = pygame.sprite.Group()   #last_obstacle is meant to keep track of the last created obstacle to decide when to create a new one
+ 
+    
 
-    while True:
+    while Dino.isDead!=True:
         for event in pygame.event.get():   
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -216,6 +244,13 @@ def game():
 
         for i in cactuses:      #forcing cactuses to move
             i.movementVector[0] = -1*gameSpeed
+            if pygame.sprite.collide_mask(Dino,i):
+                    Dino.isDead = True
+        
+        for f in pterodactyl:
+            f.movementVector[0] = -1*gameSpeed
+            if pygame.sprite.collide_mask(Dino,f):
+                    Dino.isDead = True
 
         if len(cactuses)<2: 
             if len(cactuses)==0:    #creating the first obstacle which always gonna be a cactus
@@ -227,7 +262,11 @@ def game():
                         last_obstacle.empty()
                         last_obstacle.add(Cactus(cactuses, gameSpeed, 40, 40))
 
-        
+        if len(pterodactyl)==0 and random.randrange(0,25) == 1 :# randomness of spawnining 
+            for l in last_obstacle:
+                if l.rect.right < width*0.7: #if last obstacle went through the 70% of the screen we can create another ptera
+                    last_obstacle.empty() #empty of all obstacles 
+                    last_obstacle.add(DinoObsticle(pterodactyl,gameSpeed, 46, 40)) #add pterodactyl obsticle with given gamespeed
 
                     
             
@@ -238,8 +277,9 @@ def game():
         game_ground.update()
         cactuses.draw(screen)
         cactuses.update()
-
-
+        pterodactyl.draw(screen)
+        pterodactyl.update()
+        
         pygame.display.update()
         clock.tick(FPS)
 
