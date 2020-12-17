@@ -106,7 +106,6 @@ class Dinosaur():
             self.rect.bottom = height-3
             self.isJumping = False
 
-            
 
     def update(self):
 
@@ -209,9 +208,53 @@ class Ground():
             self.rect2.left = self.rect.right
 
 
+# Function to extract numbers for a score
+def Numbers(number):
+    if number > -1:
+        num = []
+        while(number/10 != 0):
+            num.append(number%10)
+            number = int(number/10)
+
+        num.append(number%10)
+        for i in range(len(num),5):
+            num.append(0)
+        num.reverse()
+
+        return num
+
+class Scores():
+    def __init__(self, x=-1, y=-1):
+        self.score = 0
+        self.numbers,self.numbersrect = files_load('numbers.png',12,1,11,int(11*6/5),-1)
+        self.image = pygame.Surface((55,int(11*6/5)))
+        self.rect = self.image.get_rect()
+
+        if x == -1:
+            self.rect.left = width * 0.89
+        else:
+            self.rect.left = x
+
+        if y == -1:
+            self.rect.top = height * 0.1
+        else:
+            self.rect.top = y
+
+    def draw(self):
+        screen.blit(self.image,self.rect)
+
+    def update(self,score):
+        score_num = Numbers(score)
+        self.image.fill(background_color)
+
+        for i in score_num:
+            self.image.blit(self.numbers[i],self.numbersrect)
+            self.numbersrect.left += self.numbersrect.width
+        self.numbersrect.left = 0
+
 
 def game():
-    score = 0
+    global high_score
     gameSpeed = 4
     gameOver = False
     Dino = Dinosaur(40,40)
@@ -219,8 +262,20 @@ def game():
     cactuses = pygame.sprite.Group()    #creating cactuses group
     pterodactyl = pygame.sprite.Group() #creating pterodactyl group
     last_obstacle = pygame.sprite.Group()   #last_obstacle is meant to keep track of the last created obstacle to decide when to create a new one
+    scr = Scores()
+    highscr = Scores(width * 0.78)
+    score = 0
 
-    
+    numbers,numbersrect = files_load('numbers.png',12,1,11,int(11*6/5),-1)
+    HI_img = pygame.Surface((22,int(11*6/5)))
+    HI_rect = HI_img.get_rect()
+    HI_img.fill(background_color)
+    HI_img.blit(numbers[10],numbersrect)
+    numbersrect.left += numbersrect.width
+    HI_img.blit(numbers[11],numbersrect)
+    HI_rect.top = height * 0.1
+    HI_rect.left = width * 0.73
+
 
     while Dino.isDead!=True:
         for event in pygame.event.get():   
@@ -231,6 +286,8 @@ def game():
                 if event.key == pygame.K_SPACE:
                     if (Dino.rect.bottom == height-3 and Dino.isDucking == False) :
                         Dino.isJumping = True
+                        if pygame.mixer.get_init() != None:
+                            jump_sound.play()
                         Dino.movementVector[1] = -1*Dino.jumpSpeed
 
                 if event.key == pygame.K_DOWN:
@@ -245,11 +302,23 @@ def game():
             i.movementVector[0] = -1*gameSpeed
             if pygame.sprite.collide_mask(Dino,i):
                     Dino.isDead = True
+                    if pygame.mixer.get_init() != None:
+                        fail_sound.play()
         
         for f in pterodactyl:
             f.movementVector[0] = -1*gameSpeed
             if pygame.sprite.collide_mask(Dino,f):
                     Dino.isDead = True
+                    if pygame.mixer.get_init() != None:
+                        fail_sound.play()
+
+        if Dino.num > high_score:
+                    high_score = Dino.num
+
+        if high_score != 0:
+            highscr.draw()
+            screen.blit(HI_img,HI_rect)
+
 
         if len(cactuses)<2: 
             if len(cactuses)==0 and random.randrange(0,10)==1:    #creating the first obstacle which always gonna be a cactus
@@ -267,7 +336,6 @@ def game():
                     last_obstacle.empty() #empty of all obstacles 
                     last_obstacle.add(DinoObsticle(pterodactyl,gameSpeed, 46, 40)) #add pterodactyl obsticle with given gamespeed
 
-            
         screen.fill(background_color)
         Dino.draw()
         Dino.update()
@@ -277,6 +345,10 @@ def game():
         cactuses.update()
         pterodactyl.draw(screen)
         pterodactyl.update()
+        scr.draw()
+        scr.update(Dino.num)
+        highscr.draw()
+        highscr.update(high_score)
         pygame.display.update()
         clock.tick(FPS)
 
