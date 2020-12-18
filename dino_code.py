@@ -133,6 +133,10 @@ class Dinosaur():
         self.checkIfLanded()
 
     def draw(self):     #drawing a dinosaur
+        if self.isDead:
+            if self.isDucking:
+                self.isDucking = False
+            self.image = self.images[4]
         screen.blit(self.image, self.rect)
     
 
@@ -255,17 +259,15 @@ class Scores():
 
 def game():
     global high_score
-    gameSpeed = 4
-    gameOver = False
+    gameSpeed = 5
     Dino = Dinosaur(40,40)
     game_ground = Ground(gameSpeed)
     cactuses = pygame.sprite.Group()    #creating cactuses group
     pterodactyl = pygame.sprite.Group() #creating pterodactyl group
     last_obstacle = pygame.sprite.Group()   #last_obstacle is meant to keep track of the last created obstacle to decide when to create a new one
     scr = Scores()
-    highscr = Scores(width * 0.78)
-    score = 0
-
+    highscr = Scores(width * 0.78) 
+    QuitFlag = False
     numbers,numbersrect = files_load('numbers.png',12,1,11,int(11*6/5),-1)
     HI_img = pygame.Surface((22,int(11*6/5)))
     HI_rect = HI_img.get_rect()
@@ -277,97 +279,103 @@ def game():
     HI_rect.left = width * 0.73
 
 
-    while Dino.isDead!=True:
-        for event in pygame.event.get():   
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                quit()
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE:
-                    if (Dino.rect.bottom == height-3 and Dino.isDucking == False) :
-                        Dino.isJumping = True
-                        if pygame.mixer.get_init() != None:
-                            jump_sound.play()
-                        Dino.movementVector[1] = -1*Dino.jumpSpeed
-
-                if event.key == pygame.K_DOWN:
-                    if not (Dino.isJumping or Dino.isDead):
-                        Dino.isDucking = True
-
-            if event.type == pygame.KEYUP:
-                if event.key == pygame.K_DOWN:
-                    Dino.isDucking = False
-
-        for i in cactuses:      #forcing cactuses to move
-            i.movementVector[0] = -1*gameSpeed
-            if pygame.sprite.collide_mask(Dino,i):
-                    Dino.isDead = True
-                    if pygame.mixer.get_init() != None:
-                        fail_sound.play()
-        
-        for f in pterodactyl:
-            f.movementVector[0] = -1*gameSpeed
-            if pygame.sprite.collide_mask(Dino,f):
-                    Dino.isDead = True
-                    if pygame.mixer.get_init() != None:
-                        fail_sound.play()
-
-        if Dino.num > high_score:
-                    high_score = Dino.num
-
-        if high_score != 0:
-            highscr.draw()
-            screen.blit(HI_img,HI_rect)
-
-
-        if len(cactuses)<2: 
-            if len(cactuses)==0 and random.randrange(0,10)==1:    #creating the first obstacle which always gonna be a cactus
-                last_obstacle.empty()
-                last_obstacle.add(Cactus(cactuses, gameSpeed, 40, 40))
-            else:
-                for i in last_obstacle:
-                    if i.rect.right < width*0.5:    #if last obstacle went through the half of the screen we can create another cactus
-                        last_obstacle.empty()
-                        last_obstacle.add(Cactus(cactuses, gameSpeed, 40, 40))
-
-        if len(pterodactyl)==0 and random.randrange(0,25) == 1 :# randomness of spawnining 
-            for l in last_obstacle:
-                if l.rect.right < width*0.75: #if last obstacle went through the 70% of the screen we can create another ptera
-                    last_obstacle.empty() #empty of all obstacles 
-                    last_obstacle.add(DinoObsticle(pterodactyl,gameSpeed, 46, 40)) #add pterodactyl obsticle with given gamespeed
-
-        screen.fill(background_color)
-        Dino.draw()
-        Dino.update()
-        game_ground.draw()
-        game_ground.update()
-        cactuses.draw(screen)
-        cactuses.update()
-        pterodactyl.draw(screen)
-        pterodactyl.update()
-        scr.draw()
-        scr.update(Dino.num)
-        highscr.draw()
-        highscr.update(high_score)
-        pygame.display.update()
-        clock.tick(FPS)
-
-        if(score%500==499):
-            game_ground.speed-=1
-            gameSpeed+=1
-
-        score+=1
-
-        while Dino.isDead:
+    while QuitFlag== False:
+        while Dino.isDead== False:
             for event in pygame.event.get():   
                 if event.type == pygame.QUIT:
-                    pygame.quit()
-                    quit()
+                    QuitFlag = True
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_SPACE:
-                        Dino.isDead == False
+                        if (Dino.rect.bottom == height-3 and Dino.isDucking == False) :
+                            Dino.isJumping = True
+                            if pygame.mixer.get_init() != None:
+                                jump_sound.play()
+                            Dino.movementVector[1] = -1*Dino.jumpSpeed
+
+                    if event.key == pygame.K_DOWN:
+                        if not (Dino.isJumping or Dino.isDead):
+                            Dino.isDucking = True
+
+                if event.type == pygame.KEYUP:
+                    if event.key == pygame.K_DOWN:
+                        Dino.isDucking = False
+
+            for i in cactuses:      #forcing cactuses to move
+                i.movementVector[0] = -1*gameSpeed
+                if pygame.sprite.collide_mask(Dino,i):
+                    Dino.isDead = True
+                    if pygame.mixer.get_init() != None:
+                        fail_sound.play()
+            
+            for f in pterodactyl:
+                f.movementVector[0] = -1*gameSpeed
+                if pygame.sprite.collide_mask(Dino,f):
+                    Dino.isDead = True
+                    if pygame.mixer.get_init() != None:
+                        fail_sound.play()
+
+
+            if len(cactuses)<2: 
+                if len(cactuses)==0 and random.randrange(0,10)==1:    #creating the first obstacle which always gonna be a cactus
+                    last_obstacle.empty()
+                    last_obstacle.add(Cactus(cactuses, gameSpeed, 40, 40))
+                else:
+                    for i in last_obstacle:
+                        if i.rect.right < width*0.5:    #if last obstacle went through the half of the screen we can create another cactus
+                            last_obstacle.empty()
+                            last_obstacle.add(Cactus(cactuses, gameSpeed, 40, 40))
+
+            if len(pterodactyl)==0 and random.randrange(0,25) == 1 :# randomness of spawnining 
+                for l in last_obstacle:
+                    if l.rect.right < width*0.75: #if last obstacle went through the 70% of the screen we can create another ptera
+                        last_obstacle.empty() #empty of all obstacles 
+                        last_obstacle.add(DinoObsticle(pterodactyl,gameSpeed, 46, 40)) #add pterodactyl obsticle with given gamespeed
+
+            screen.fill(background_color)
+            Dino.draw()
+            Dino.update()
+            game_ground.draw()
+            game_ground.update()
+            cactuses.draw(screen)
+            cactuses.update()
+            pterodactyl.draw(screen)
+            pterodactyl.update()
+            scr.draw()
+            scr.update(Dino.counter)
+            highscr.update(high_score)
+
+            if high_score != 0:
+                highscr.draw()
+                screen.blit(HI_img,HI_rect)
+
+            pygame.display.update()
+            clock.tick(FPS)
+
+            if(Dino.counter%1000==999):
+                game_ground.speed+=1 
+                gameSpeed+=1
+
+            if QuitFlag:
+                break
+
+        while Dino.isDead:
+                
+            if Dino.counter > high_score:
+                high_score = Dino.counter
+
+            for event in pygame.event.get():   
+                if event.type == pygame.QUIT:
+                    QuitFlag = True
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_SPACE:
+                        Dino.isDead = False
                         game()
+                        
+            if QuitFlag:
+                break 
+
+        pygame.quit()
+        quit()
+
 
 game()
-
-
